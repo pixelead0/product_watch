@@ -3,7 +3,7 @@ from typing import Optional
 from uuid import UUID
 
 from ninja import Schema
-from pydantic import EmailStr, Field
+from pydantic import EmailStr, Field, validator
 
 
 class UserCreate(Schema):
@@ -37,6 +37,12 @@ class RefreshTokenSchema(Schema):
 
 class TokenPayload(Schema):
     sub: str  # usuario ID
-    exp: int
-    iat: int
+    exp: float
+    iat: float
     is_admin: bool
+
+    @validator("exp", "iat", pre=True)
+    def validate_timestamps(cls, v):
+        if isinstance(v, float):
+            return v
+        return float(v)

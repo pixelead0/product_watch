@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, List, Optional
 from uuid import UUID
 
@@ -8,6 +9,8 @@ from auth.dependencies import get_admin_auth
 from notifications.service import NotificationService
 from products.schemas import ProductCreate, ProductList, ProductOut, ProductUpdate
 from products.service import ProductService
+
+logger = logging.getLogger("products")
 
 router = Router(tags=["products"])
 product_service = ProductService()
@@ -53,12 +56,32 @@ def create_product(request: HttpRequest, product_data: ProductCreate):
     """
     Create a new product (admin only).
     """
-    product = product_service.create_product(product_data)
+    logger.info(f"Intentando crear producto: {product_data.name}")
 
-    # Send notification about new product
-    notification_service.notify_product_created(product.id)
+    # Verificar usuario
+    if hasattr(request, "user"):
+        logger.info(f"Usuario autenticado: {request.user.id}, is_admin: {request.user.is_admin}")
+    else:
+        logger.error("Usuario no disponible en la solicitud")
+        return 401, {"detail": "Usuario no autenticado"}
 
-    return 201, ProductOut.from_orm(product)
+    # Intentar crear producto
+    try:
+        product = product_service.create_product(product_data)
+        logger.info(f"Producto creado con éxito: {product.id}")
+
+        # Enviar notificación
+        try:
+            notification_service.notify_product_created(product.id)
+            logger.info("Notificación enviada")
+        except Exception as e:
+            logger.error(f"Error al enviar notificación: {str(e)}")
+            # Continuamos a pesar del error en notificación
+
+        return 201, ProductOut.from_orm(product)
+    except Exception as e:
+        logger.error(f"Error al crear producto: {str(e)}")
+        return 400, {"detail": f"Error al crear producto: {str(e)}"}
 
 
 @router.put("/{product_id}", auth=get_admin_auth(), response={200: ProductOut, 404: Dict[str, str]})
