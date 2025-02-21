@@ -24,7 +24,8 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 
 WORKDIR $PYSETUP_PATH
 COPY ./poetry.lock ./pyproject.toml ./
-RUN poetry install --without dev
+# RUN poetry install --without dev
+RUN poetry install
 
 # 'development' stage installs all dev deps and can be used to develop code.
 FROM python-base as development
@@ -36,5 +37,6 @@ WORKDIR /app
 COPY ./src /app/src/
 
 ENV PYTHONPATH=/app/src
+RUN /bin/sh -c python manage.py collectstatic --noinput
 
 CMD ["uvicorn", "product_watch.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--reload"]

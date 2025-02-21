@@ -23,6 +23,10 @@ services:
     ports:
       - "5432:5432"
     env_file: .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $POSTGRES_USER -d product_watch" ]
+      interval: 5s
+      retries: 5
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -62,6 +66,31 @@ services:
       - ./src:/app/src
     environment:
       - PYTHONPATH=/app/src
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+  
+  tests:
+      build:
+        context: .
+        dockerfile: Dockerfile
+        target: development
+      depends_on:
+        - postgres
+        - redis
+      env_file: .env
+      volumes:
+        - ./src:/app/src
+        - ./pyproject.toml:/app/pyproject.toml
+      environment:
+        - PYTHONPATH=/app/src
+      command: sh -c "poetry install && poetry run pytest"
 
 volumes:
   postgres_data:

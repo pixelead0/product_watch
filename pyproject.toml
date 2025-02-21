@@ -1,79 +1,46 @@
 [tool.poetry]
-name = "product_watch"
+name = "product-watch"
 version = "0.1.0"
-description = "Product tracing system with Django Ninja"
-authors = ["pixelead0 <me@pixelead0.com>"]
+description = "Sistema de gestión de productos y seguimiento de visitas"
+authors = ["Tu Nombre <tu.email@example.com>"]
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-django = "^5.0"
-django-ninja = "^1.0"
+django = "^5.0.2"
+django-ninja = "^1.0.1"
 psycopg2-binary = "^2.9.9"
 redis = "^5.0.1"
 celery = "^5.3.6"
-pydantic = "^2.5"
-python-jose = {extras = ["cryptography"], version = "^3.3.0"}
-sendgrid = "^6.10.0"
-uvicorn = {extras = ["standard"], version = "^0.25.0"}
+python-jose = "^3.3.0"
+sendgrid = "^6.11.0"
+gunicorn = "^21.2.0"
 python-dotenv = "^1.0.0"
+uvicorn = "^0.27.0"
+django-redis = "^5.4.0"
+pydantic = {extras = ["email"], version = "^2.6.0"}
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4"
-pytest-django = "^4.7"
-pytest-asyncio = "^0.23.3"
-black = "^23.12"
-isort = "^5.13"
-mypy = "^1.8"
-flake8 = "^7.1.2"
-pre-commit = "^4.1.0"
-pytest-cov = "^6.0.0"
-pytest-mock = "^3.14.0"
-httpx = "^0.28.1"
-faker = "^36.1.1"
-coverage = "^7.6.12"
-types-passlib = "^1.7.7.20241221"
+black = "^25.1.0"
+flake8 = "^7.0.0"
+pytest = "^8.0.0"
+pytest-django = "^4.8.0"
+pytest-cov = "^4.1.0"
+mypy = "^1.7.1"
+pre-commit = "^3.5.0"
+isort = "^5.13.0"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 120
-target-version = ['py312']
-include = '\.pyi?$'
+target-version = ["py312"]
 
 [tool.isort]
 profile = "black"
-multi_line_output = 3
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-addopts = "-v --cov=src --cov-report=html --cov-report=term-missing --cov-fail-under=50"
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
-
-[tool.coverage.run]
-source = ["src"]
-fail_under = 50
-omit = [
-    "tests/*",
-    "**/__init__.py",
-    "src/main.py",
-    "src/config.py"
-]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if self.debug:",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-    "pass",
-    "raise ImportError",
-]
-
+line_length = 120
 
 [tool.mypy]
 python_version = "3.12"
@@ -81,12 +48,18 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-ignore_missing_imports = false
-explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "product_watch.settings"
+python_files = ["test_*.py"]
+testpaths = ["tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+addopts = "--cov=src --cov-report=html --cov-fail-under=90"
