@@ -1,3 +1,4 @@
+import logging
 import time
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Union
@@ -9,9 +10,12 @@ from jose import JWTError, jwt
 
 from auth.schemas import TokenPayload
 
+logger = logging.getLogger("auth")
+
 
 class JWTHandler:
     def __init__(self) -> None:
+        logger.info("Inicializando JWTHandler")
         self.redis_client = redis.Redis(
             host=settings.REDIS_HOST,
             port=int(settings.REDIS_PORT),
@@ -22,11 +26,17 @@ class JWTHandler:
         self.algorithm = settings.JWT_ALGORITHM
         self.access_token_expire_minutes = settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
         self.refresh_token_expire_days = settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS
+        try:
+            ping_result = self.redis_client.ping()
+            logger.info(f"Conexión a Redis: {'Exitosa' if ping_result else 'Fallida'}")
+        except Exception as e:
+            logger.error(f"Error al conectar con Redis: {str(e)}")
 
     def create_access_token(self, user_id: Union[str, UUID], is_admin: bool) -> str:
         """
         Create a JWT access token.
         """
+        logger.info(f"Creando token para usuario: {user_id}, is_admin: {is_admin}")
         expire = datetime.utcnow() + timedelta(minutes=self.access_token_expire_minutes)
         payload = {
             "sub": str(user_id),
@@ -40,11 +50,22 @@ class JWTHandler:
         token_key = f"token:{user_id}"
         token_data = {
             "user_id": str(user_id),
-            "exp": int(expire.timestamp()),
+            "exp": str(int(expire.timestamp())),
             "is_admin": str(is_admin).lower(),
         }
-        self.redis_client.hmset(token_key, token_data)
-        self.redis_client.expireat(token_key, int(expire.timestamp()))
+
+        try:
+            # Guardar en Redis
+            self.redis_client.hmset(token_key, token_data)
+            self.redis_client.expireat(token_key, int(expire.timestamp()))
+
+            # Verificar que se guardó correctamente
+            stored_data = self.redis_client.hgetall(token_key)
+            logger.info(f"Token almacenado en Redis: {token_key} -> {stored_data}")
+            if not stored_data:
+                logger.error(f"El token NO se almacenó correctamente en Redis: {token_key}")
+        except Exception as e:
+            logger.error(f"Error al guardar token en Redis: {str(e)}")
 
         return token
 
@@ -72,18 +93,80 @@ class JWTHandler:
         """
         Verify a JWT token.
         """
+
         try:
+            # Verificar firma JWT
             payload = jwt.decode(token, self.jwt_secret_key, algorithms=[self.algorithm])
             token_data = TokenPayload(**payload)
+
+            # Verificar en Redis si está disponible
+            user_id = payload.get("sub")
+            token_key = f"token:{user_id}"
+
+            try:
+                exists = self.redis_client.exists(token_key)
+                if exists:
+                    # Token válido en Redis
+                    stored_data = self.redis_client.hgetall(token_key)
+                    logger.info(f"Token validado en Redis: {token_key}")
+                else:
+                    logger.warning(f"Token no encontrado en Redis: {token_key}")
+                    if settings.STRICT_TOKEN_VALIDATION:
+                        return None
+                    logger.warning("Modo estricto desactivado: aceptando token JWT sin verificación en Redis")
+            except Exception as e:
+                # Error al verificar en Redis
+                logger.error(f"Error al verificar token en Redis: {str(e)}")
+                if settings.STRICT_TOKEN_VALIDATION:
+                    return None
+                logger.warning("Modo estricto desactivado: aceptando token JWT debido a error en Redis")
+
+            return token_data
+        except JWTError as e:
+            logger.error(f"Error al verificar token JWT: {str(e)}")
+            return None
+        except Exception as e:
+            logger.error(f"Error inesperado en verify_token: {str(e)}")
+            return None
+
+    def verify_token0(self, token: str) -> Optional[TokenPayload]:
+        """
+        Verify a JWT token.
+        """
+        logger.info(f"Verificando token: {token[:20]}...")
+        try:
+            payload = jwt.decode(token, self.jwt_secret_key, algorithms=[self.algorithm])
+            logger.info(f"Token decodificado: {payload}")
+
+            token_data = TokenPayload(**payload)
+            logger.info(f"TokenPayload creado: {token_data}")
 
             # Check if token is in Redis
             user_id = payload.get("sub")
             token_key = f"token:{user_id}"
-            if not self.redis_client.exists(token_key):
+
+            try:
+                exists = self.redis_client.exists(token_key)
+                if exists:
+                    stored_data = self.redis_client.hgetall(token_key)
+                    logger.info(f"Token encontrado en Redis: {token_key} -> {stored_data}")
+                else:
+                    logger.warning(f"Token NO encontrado en Redis: {token_key}")
+                    return None
+            except Exception as e:
+                logger.error(f"Error al verificar token en Redis: {str(e)}")
+                # En caso de error de Redis, podríamos aceptar el token JWT
+                # Descomentar para desarrollo si hay problemas con Redis
+                # logger.warning("Aceptando token JWT debido a error de Redis")
+                # return token_data
                 return None
 
             return token_data
-        except JWTError:
+        except JWTError as e:
+            logger.error(f"Error al verificar token JWT: {str(e)}")
+            return None
+        except Exception as e:
+            logger.error(f"Error inesperado en verify_token: {str(e)}")
             return None
 
     def verify_refresh_token(self, token: str) -> Optional[str]:
