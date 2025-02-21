@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #4A90E2;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .product-details {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .analytics {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f0f7ff;
+            border-radius: 5px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Product Updated</h2>
+        </div>
+        <div class="content">
+            <p>Hello Admin,</p>
+            <p>A product has been updated in the system{% if updated_by %} by {{ updated_by.email }}{% endif %}.</p>
+            
+            <div class="product-details">
+                <h3>{{ product.name }}</h3>
+                <p><strong>ID:</strong> {{ product.id }}</p>
+                <p><strong>Description:</strong> {{ product.description }}</p>
+                <p><strong>Price:</strong> ${{ product.price }}</p>
+                <p><strong>Stock:</strong> {{ product.stock }} units</p>
+                <p><strong>Last Updated:</strong> {{ product.updated_at }}</p>
+            </div>
+            
+            {% if analytics %}
+            <div class="analytics">
+                <h3>Product Analytics</h3>
+                <p><strong>Total Visits:</strong> {{ analytics.total_visits }}</p>
+                <p><strong>Unique Visitors:</strong> {{ analytics.unique_visitors }}</p>
+                {% if analytics.avg_duration %}
+                <p><strong>Average Visit Duration:</strong> {{ analytics.avg_duration }} seconds</p>
+                {% endif %}
+                <p><strong>Last Analytics Update:</strong> {{ analytics.last_updated }}</p>
+            </div>
+            {% endif %}
+            
+            <p>Please log in to the admin panel for more details.</p>
+            
+            <p>Best regards,<br>ProductWatch Team</p>
+        </div>
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>
+
+<!-- notifications/templates/emails/daily_report.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #4A90E2;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .summary {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .popular-products {
+            margin: 20px 0;
+        }
+        .product-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .product-item:last-child {
+            border-bottom: none;
+        }
+        .trending-up {
+            color: green;
+        }
+        .trending-down {
+            color: red;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Daily Product Report</h2>
+        </div>
+        <div class="content">
+            <p>Hello Admin,</p>
+            <p>Here is your daily report for our product catalog.</p>
+            
+            <div class="summary">
+                <h3>Summary</h3>
+                <p><strong>Total Products:</strong> {{ total_products }}</p>
+                <p><strong>Date:</strong> {% now "F j, Y" %}</p>
+            </div>
+            
+            <div class="popular-products">
+                <h3>Most Popular Products</h3>
+                
+                {% if popular_products %}
+                    {% for product, stats in popular_products %}
+                    <div class="product-item">
+                        <h4>{{ product.name }}</h4>
+                        <p><strong>ID:</strong> {{ product.id }}</p>
+                        <p><strong>Total Visits:</strong> {{ stats.total_visits }}</p>
+                        <p><strong>Unique Visitors:</strong> {{ stats.unique_visitors }}</p>
+                        <p>
+                            <strong>Trend:</strong> 
+                            {% if stats.percentage_change > 0 %}
+                            <span class="trending-up">↑ {{ stats.percentage_change|floatformat:1 }}%</span>
+                            {% elif stats.percentage_change < 0 %}
+                            <span class="trending-down">↓ {{ stats.percentage_change|floatformat:1 }}%</span>
+                            {% else %}
+                            <span>No change</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No visit data available yet.</p>
+                {% endif %}
+            </div>
+            
+            <p>Please log in to the admin panel for more detailed analytics.</p>
+            
+            <p>Best regards,<br>ProductWatch Team</p>
+        </div>
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+            <p>Generated on {% now "F j, Y H:i:s" %}</p>
+        </div>
+    </div>
+</body>
+</html>
