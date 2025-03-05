@@ -4,6 +4,7 @@ from uuid import UUID
 from notifications.tasks import (
     generate_daily_report,
     notify_product_created,
+    notify_product_deleted,
     notify_product_updated,
 )
 
@@ -26,6 +27,16 @@ class NotificationService:
         """
         # Add task to queue
         task = notify_product_updated.delay(str(product_id), str(updated_by_id))
+
+        return {"success": True, "task_id": task.id, "message": "Notification queued"}
+
+    @staticmethod
+    def notify_product_deleted(product_id: UUID, deleted_by_id: UUID) -> Dict[str, Union[bool, str]]:
+        """
+        Queue notification for a product update
+        """
+        # Add task to queue
+        task = notify_product_deleted.delay(str(product_id), str(deleted_by_id))
 
         return {"success": True, "task_id": task.id, "message": "Notification queued"}
 

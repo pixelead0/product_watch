@@ -105,6 +105,11 @@ def delete_product(request: HttpRequest, product_id: UUID):
     Delete a product (admin only).
     """
     success = product_service.delete_product(product_id)
+
     if not success:
         return 404, {"detail": "Product not found"}
+
+    # Send notification about product update
+    notification_service.notify_product_deleted(product_id, request.user.id)
+
     return 204, None

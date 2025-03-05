@@ -51,8 +51,8 @@
         </div>
         <div class="content">
             <p>Hello Admin,</p>
-            <p>A product has been updated in the system{% if updated_by %} by {{ updated_by.email }}{% endif %}.</p>
-            
+            <p>A product has been updated in the system{% if user_event_by %} by {{ user_event_by.email }}{% endif %}.</p>
+
             <div class="product-details">
                 <h3>{{ product.name }}</h3>
                 <p><strong>ID:</strong> {{ product.id }}</p>
@@ -61,7 +61,7 @@
                 <p><strong>Stock:</strong> {{ product.stock }} units</p>
                 <p><strong>Last Updated:</strong> {{ product.updated_at }}</p>
             </div>
-            
+
             {% if analytics %}
             <div class="analytics">
                 <h3>Product Analytics</h3>
@@ -73,9 +73,9 @@
                 <p><strong>Last Analytics Update:</strong> {{ analytics.last_updated }}</p>
             </div>
             {% endif %}
-            
+
             <p>Please log in to the admin panel for more details.</p>
-            
+
             <p>Best regards,<br>ProductWatch Team</p>
         </div>
         <div class="footer">
@@ -151,16 +151,16 @@
         <div class="content">
             <p>Hello Admin,</p>
             <p>Here is your daily report for our product catalog.</p>
-            
+
             <div class="summary">
                 <h3>Summary</h3>
                 <p><strong>Total Products:</strong> {{ total_products }}</p>
                 <p><strong>Date:</strong> {% now "F j, Y" %}</p>
             </div>
-            
+
             <div class="popular-products">
                 <h3>Most Popular Products</h3>
-                
+
                 {% if popular_products %}
                     {% for product, stats in popular_products %}
                     <div class="product-item">
@@ -169,7 +169,7 @@
                         <p><strong>Total Visits:</strong> {{ stats.total_visits }}</p>
                         <p><strong>Unique Visitors:</strong> {{ stats.unique_visitors }}</p>
                         <p>
-                            <strong>Trend:</strong> 
+                            <strong>Trend:</strong>
                             {% if stats.percentage_change > 0 %}
                             <span class="trending-up">↑ {{ stats.percentage_change|floatformat:1 }}%</span>
                             {% elif stats.percentage_change < 0 %}
@@ -184,9 +184,9 @@
                     <p>No visit data available yet.</p>
                 {% endif %}
             </div>
-            
+
             <p>Please log in to the admin panel for more detailed analytics.</p>
-            
+
             <p>Best regards,<br>ProductWatch Team</p>
         </div>
         <div class="footer">
